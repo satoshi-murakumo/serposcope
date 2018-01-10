@@ -1,0 +1,10 @@
+https://nelog.jp/serposcope
+https://nelog.jp/how-to-install-serposcope
+https://serposcope.serphacker.com/en/
+http://www.bloglifer.net/entry/seo-keyword-search-rank-check-tool
+http://www.weblog-life.net/entry/serposcope_review
+http://t-shimohara.com/marketing/serposcope-install
+http://www.procrasist.com/entry/serposcope
+https://ushigyu.net/2017/01/30/serposcope/
+http://brasiltips.com/serposcope/
+https://awe-some.net/2016/11/serposcope/

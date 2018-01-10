@@ -1,0 +1,9 @@
+http://www.soumu.go.jp/senkyo/senkyo_s/
+https://ja.m.wikipedia.org/wiki/%E9%81%B8%E6%8C%99
+http://sp.yomiuri.co.jp/election/shugiin/2017/
+http://www.sankei.com/smp/politics/newslist/election-n1.html
+https://www.nhk.or.jp/senkyo/
+http://www.asahi.com/sp/senkyo/senkyo2017/kaihyo/
+http://www.asahi.com/sp/senkyo/senkyo2017/
+http://www.asahi.com/sp/senkyo/senkyo2017/kaihyo/A13.html
+https://www.city.shinjuku.lg.jp/kusei/index10.html
