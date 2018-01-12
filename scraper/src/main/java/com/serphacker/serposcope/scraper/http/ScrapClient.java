@@ -1,11 +1,69 @@
-/* 
+/*
  * Serposcope - SEO rank checker https://serposcope.serphacker.com/
- * 
+ *
  * Copyright (c) 2016 SERP Hacker
  * @author Pierre Nogues <support@serphacker.com>
  * @license https://opensource.org/licenses/MIT MIT License
  */
 package com.serphacker.serposcope.scraper.http;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.conn.routing.HttpRoutePlanner;
+import org.apache.http.conn.routing.RouteInfo;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.ContentBody;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.RedirectLocations;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serphacker.serposcope.scraper.http.extensions.CloseableBasicHttpClientConnectionManager;
@@ -15,65 +73,9 @@ import com.serphacker.serposcope.scraper.http.extensions.ScrapClientSocksAuthent
 import com.serphacker.serposcope.scraper.http.proxy.BindProxy;
 import com.serphacker.serposcope.scraper.http.proxy.DirectNoProxy;
 import com.serphacker.serposcope.scraper.http.proxy.HttpProxy;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.conn.routing.HttpRoute;
-import org.apache.http.conn.routing.HttpRoutePlanner;
-import org.apache.http.conn.routing.RouteInfo;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.protocol.HttpContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.serphacker.serposcope.scraper.http.proxy.ScrapProxy;
 import com.serphacker.serposcope.scraper.http.proxy.SocksProxy;
 import com.serphacker.serposcope.scraper.utils.EncodeUtils;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.ContentBody;
-import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.client.RedirectLocations;
-import org.apache.http.message.BasicNameValuePair;
 
 /**
  * *
@@ -88,9 +90,9 @@ public class ScrapClient implements Closeable, CredentialsProvider {
         MULTIPART,
         JSON
     }
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(ScrapClient.class);
-    
+
     private final static ObjectMapper jsonMapper = new ObjectMapper();
 
     public final static String DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:42.0) Gecko/20100101 Firefox/42.0";
@@ -354,6 +356,17 @@ public class ScrapClient implements Closeable, CredentialsProvider {
         return header.getValue();
     }
 
+    public Header[] getResponseHeaderAll() {
+        if (response == null) {
+            return null;
+        }
+        Header[] headers = response.getAllHeaders();
+        if (headers == null) {
+            return null;
+        }
+        return headers;
+    }
+
     public int getStatusCode() {
         return statusCode;
     }
@@ -410,10 +423,10 @@ public class ScrapClient implements Closeable, CredentialsProvider {
                 }catch(Exception ex){
                     statusCode = -1;
                     exception = ex;
-                    return statusCode;                    
+                    return statusCode;
                 }
                 break;
-            
+
             case URL_ENCODED:
                 List<NameValuePair> formparams = new ArrayList<>();
                 for (Map.Entry<String, Object> entry : data.entrySet()) {
@@ -516,7 +529,7 @@ public class ScrapClient implements Closeable, CredentialsProvider {
             try {
                 clearPreviousRequest();
                 executionTimeMS = System.currentTimeMillis();
-                
+
                 HttpClientContext context = HttpClientContext.create();
                 initializeRequest(request, context);
 
@@ -564,7 +577,7 @@ public class ScrapClient implements Closeable, CredentialsProvider {
             return statusCode;
         }
     }
-    
+
     protected void initializeRequest(HttpRequestBase request, HttpClientContext context){
         if (request.getFirstHeader("user-agent") == null) {
             request.setHeader("User-Agent", useragent);
@@ -573,28 +586,28 @@ public class ScrapClient implements Closeable, CredentialsProvider {
         for (Header requestHeader : requestHeaders) {
             request.setHeader(requestHeader);
         }
-        
-        RequestConfig.Builder configBuilder = 
+
+        RequestConfig.Builder configBuilder =
             RequestConfig.copy(request.getConfig() == null ? RequestConfig.DEFAULT : request.getConfig());
-        
+
         if (timeoutMS != null) {
             configBuilder.setConnectTimeout(timeoutMS);
             configBuilder.setConnectionRequestTimeout(timeoutMS);
             configBuilder.setSocketTimeout(timeoutMS);
         }
-        
+
         if(maxRedirect == 0){
              configBuilder.setRedirectsEnabled(false);
         } else {
             configBuilder.setMaxRedirects(maxRedirect);
         }
-         
+
         RequestConfig config = configBuilder.build();
-        
+
         context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
         request.setConfig(config);
     }
-    
+
     public void closeResponse() {
         if (response != null) {
             try {
@@ -682,11 +695,11 @@ public class ScrapClient implements Closeable, CredentialsProvider {
     public void setMaxRedirect(int maxRedirect) {
         this.maxRedirect = maxRedirect;
     }
-    
+
     public void enableFollowRedirect(){
         maxRedirect = 10;
     }
-    
+
     public void disableFollowRedirect(){
         maxRedirect = 0;
     }
@@ -694,5 +707,5 @@ public class ScrapClient implements Closeable, CredentialsProvider {
     public String getLastRedirect() {
         return lastRedirect;
     }
-    
+
 }
