@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
 
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.cookie.ClientCookie;
 import org.apache.http.impl.cookie.BasicClientCookie;
@@ -56,13 +57,10 @@ public class GoogleScraper {
         NCR_COOKIE.setAttribute(ClientCookie.PATH_ATTR, "/");
         NCR_COOKIE.setAttribute(ClientCookie.DOMAIN_ATTR, ".google.com");
     }
-    // public final static String DEFAULT_DESKTOP_UA = "Mozilla/5.0 (Windows NT
-    // 10.0; WOW64; rv:42.0) Gecko/20100101 Firefox/42.0";
-    public final static String DEFAULT_DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-    // public final static String DEFAULT_SMARTPHONE_UA = "Mozilla/5.0 (Linux;
-    // Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like
-    // Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19";
-    public final static String DEFAULT_SMARTPHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75 Mobile/14E5239e Safari/602.1";
+    public final static String DEFAULT_DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:42.0) Gecko/20100101 Firefox/42.0";
+    // public final static String DEFAULT_DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+    public final static String DEFAULT_SMARTPHONE_UA = "Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19";
+    // public final static String DEFAULT_SMARTPHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75 Mobile/14E5239e Safari/602.1";
     // public final static String DEFAULT_MOBILE_UA = "Mozilla/5.0 (Android; Mobile;
     // rv:37.0) Gecko/37.0 Firefox/37.0";
 
@@ -204,6 +202,22 @@ public class GoogleScraper {
         case 302:
             ++captchas;
             return handleCaptchaRedirect(url, referrer, http.getResponseHeader("location"));
+
+        default:
+            Header[] headers = http.getResponseHeaderAll();
+            if (headers != null) {
+                LOG.info("RESPONSE HEADER -----");
+                for (int i = 0; i < headers.length; i++) {
+                    LOG.info("{}: {}", headers[i].getName(), headers[i].getValue());
+                }
+                LOG.info("RESPONSE HEADER -----");
+            }
+            String contents = http.getContentAsString();
+            if (contents != null) {
+                LOG.info("RESPONSE CONSTENTS -----\n" + http.getContentAsString());
+                LOG.info("RESPONSE CONSTENTS -----");
+            }
+            break;
         }
 
         return Status.ERROR_NETWORK;
