@@ -32,7 +32,7 @@ public class GoogleSmartPhoneSerpParser implements GoogleSerpParser {
             return Status.ERROR_NETWORK;
         }
 
-        Elements aElts = lastSerpHtml.select(".srg a._Olt");
+        Elements aElts = lastSerpHtml.select("a._Olt, a._wSg, g-inner-card a:not(._Qwu)");
         for (Element aElt : aElts) {
 
             String link = extractLink(aElt);

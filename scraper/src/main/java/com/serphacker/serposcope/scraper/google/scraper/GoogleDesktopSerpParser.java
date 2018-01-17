@@ -32,7 +32,7 @@ public class GoogleDesktopSerpParser implements GoogleSerpParser {
             return Status.ERROR_NETWORK;
         }
 
-        Elements aElts = lastSerpHtml.select(".srg h3.r a");
+        Elements aElts = lastSerpHtml.select("._NId div.rc h3.r a, g-inner-card a");
         for (Element aElt : aElts) {
 
             String link = extractLink(aElt);
